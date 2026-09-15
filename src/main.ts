@@ -376,10 +376,17 @@ async function boot(): Promise<void> {
       return;
     }
 
-    // 2순위: 저장해둔 주소.
+    // 2순위: 빌드에 박아둔 주소.
+    //
+    // 저장된 주소보다 먼저 쓴다. 개발하면서 서버를 옮기면 옛 주소가
+    // 저장소에 남아 계속 그리로 붙으려 하기 때문이다. 이 값은 빌드할 때
+    // 일부러 넣은 것이므로 그쪽 뜻이 더 분명하다.
+    if (!el.url.value && DEFAULT_RELAY) el.url.value = DEFAULT_RELAY;
+
+    // 3순위: 저장해둔 주소.
     if (!el.url.value) el.url.value = await adapter.loadSetting(STORE_URL);
 
-    // 3순위: 같은 폰의 Relay 앱 중계.
+    // 4순위: 같은 폰의 Relay 앱 중계.
     if (!el.url.value && (await findLocalRelay())) {
       el.url.value = RELAY_ADDRESS;
       el.key.value = '';

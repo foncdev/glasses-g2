@@ -1,7 +1,7 @@
 {
   "name": "glasses-g2",
   "private": true,
-  "version": "0.2.1",
+  "version": "0.2.3",
   "type": "module",
   "description": "Even Realities G2 호스트 앱. glasses-ui를 Even Hub 앱으로 포장한다.",
   "scripts": {
