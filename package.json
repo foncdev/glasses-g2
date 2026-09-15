@@ -1,8 +1,9 @@
 {
-  "name": "glasses",
+  "name": "glasses-g2",
   "private": true,
   "version": "0.2.0",
   "type": "module",
+  "description": "Even Realities G2 호스트 앱. glasses-ui를 Even Hub 앱으로 포장한다.",
   "scripts": {
     "dev": "vite",
     "build": "tsc && vite build",
@@ -17,5 +18,6 @@
   "dependencies": {
     "@evenrealities/even_hub_sdk": "^0.0.15",
     "@foncdev/glasses-ui": "file:../glasses-ui"
-  }
+  },
+  "license": "MIT"
 }
