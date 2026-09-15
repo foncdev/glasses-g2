@@ -1,0 +1,24 @@
+{
+  "package_id": "com.foncsoft.relay",
+  "edition": "202601",
+  "name": "Relay",
+  "version": "0.2.0",
+  "min_app_version": "2.2.10",
+  "min_sdk_version": "0.0.15",
+  "entrypoint": "index.html",
+  "permissions": [
+    {
+      "name": "network",
+      "desc": "relay-service를 통해 개발 에이전트의 세션 정보를 주고받습니다.",
+      "whitelist": [
+        "http://192.168.0.10:4100",
+        "http://127.0.0.1:4100",
+        "http://localhost:4100"
+      ]
+    }
+  ],
+  "supported_languages": [
+    "ko",
+    "en"
+  ]
+}

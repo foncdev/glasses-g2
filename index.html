@@ -1,0 +1,56 @@
+<!doctype html>
+<html lang="ko">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+    <title>Relay</title>
+  </head>
+  <body>
+    <!-- 접속 설정 -->
+    <section id="setup">
+      <pre id="banner" class="banner" aria-label="FONCDEV"></pre>
+      <h1><span class="sigil">$</span> relay<span class="caret">_</span></h1>
+      <p class="hint">원격지 PC의 매니저 주소를 입력하세요. 같은 와이파이여야 합니다.</p>
+      <label>
+        매니저 주소
+        <input id="url" type="url" inputmode="url" placeholder="192.168.0.10:4000" autocomplete="off" />
+      </label>
+      <label id="user-field">
+        아이디
+        <input id="username" type="text" autocomplete="username" autocapitalize="off" />
+      </label>
+      <label>
+        <span id="key-label">비밀번호</span>
+        <input id="key" type="password" placeholder="" autocomplete="current-password" />
+      </label>
+      <button id="connect" class="primary">연결</button>
+      <button id="use-relay">Relay 중계로 연결 (127.0.0.1:8787)</button>
+      <div id="setup-msg" class="msg"></div>
+    </section>
+
+    <!-- 메인 -->
+    <section id="main" hidden>
+      <header>
+        <button id="back" hidden>‹</button>
+        <span id="title" class="path">~/sessions</span>
+        <span class="spacer"></span>
+        <label class="toggle" title="이어가기 후 원본 기록을 지웁니다 (되돌릴 수 없음)">
+          <input id="delete-orig" type="checkbox" /> 원본삭제
+        </label>
+        <label class="toggle"><input id="tts" type="checkbox" checked /> 음성</label>
+      </header>
+
+      <pre id="glasses" class="mirror"></pre>
+      <div id="log" class="log"></div>
+
+      <div class="composer">
+        <textarea id="prompt" rows="2" placeholder="프롬프트 입력" disabled></textarea>
+        <button id="add-todo" title="할 일로 추가">＋할일</button>
+        <button id="resume" hidden>▶ 이어가기</button>
+        <button id="send" class="primary" disabled>전송</button>
+      </div>
+    </section>
+
+    <script type="module" src="/src/main.ts"></script>
+  </body>
+</html>

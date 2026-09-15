@@ -1,0 +1,8 @@
+node_modules/
+dist/
+*.ehpk
+.DS_Store
+
+# 붙을 서버 주소는 개인 설정이다. .example을 복사해 쓴다.
+.env.production.local
+.env*.local
