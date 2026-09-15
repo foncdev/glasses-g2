@@ -151,6 +151,31 @@ header button {
   flex: 1;
 }
 
+/*
+ * 헤더에 붙는 얕은 버튼. 지금 붙어 있는 서버를 보여주고 누르면 바꾼다.
+ * 눈에 띄면 안 되지만 누를 수 있다는 건 알아야 해서 테두리만 둔다.
+ */
+.ghost {
+  background: none;
+  border: 1px solid var(--line, #d0d0d0);
+  border-radius: 6px;
+  padding: 2px 8px;
+  font-size: 12px;
+  font-family: inherit;
+  color: inherit;
+  opacity: 0.75;
+  min-height: 0;
+  width: auto;
+  white-space: nowrap;
+}
+.ghost:hover {
+  opacity: 1;
+}
+/* 주소가 없으면(아직 접속 전) 자리를 차지하지 않는다. */
+.ghost:empty {
+  display: none;
+}
+
 .toggle {
   flex-direction: row;
   align-items: center;

@@ -39,7 +39,18 @@ const el = {
   deleteOrig: document.getElementById('delete-orig') as HTMLInputElement,
   useRelay: document.getElementById('use-relay') as HTMLButtonElement,
   addTodo: document.getElementById('add-todo') as HTMLButtonElement,
+  server: document.getElementById('server') as HTMLButtonElement,
 };
+
+/** 주소에서 호스트만 뽑는다. 헤더가 좁아 전체를 넣으면 밀린다. */
+function hostOf(url: string): string {
+  try {
+    const u = new URL(url);
+    return u.port ? `${u.hostname}:${u.port}` : u.hostname;
+  } catch {
+    return url.replace(/^https?:\/\//, '');
+  }
+}
 
 function phoneLog(text: string, level = 'info'): void {
   const div = document.createElement('div');
@@ -222,6 +233,11 @@ async function afterAuth(baseUrl: string, token: string): Promise<void> {
   el.main.hidden = false;
   el.setupMsg.textContent = '';
 
+  // 어디에 붙었는지 헤더에 남긴다. 눌러서 바꿀 수 있다.
+  // 주소는 길어서 호스트만 보여준다.
+  el.server.textContent = hostOf(baseUrl);
+  el.server.title = `중계 서버: ${baseUrl}\n눌러서 바꾸기`;
+
   void adapter.saveSetting(STORE_URL, baseUrl);
   void adapter.saveSetting(STORE_TOKEN, token);
 
@@ -284,6 +300,23 @@ async function boot(): Promise<void> {
     el.key.value = '';
     void connect();
   });
+
+  /**
+   * 붙어 있는 서버를 바꾼다.
+   *
+   * 접속 화면으로 되돌아가되 지금 주소를 채워 둔다. 대개 IP 한두 자리만
+   * 바꾸므로 처음부터 치게 하지 않는다. 비밀번호는 비운다 — 서버가
+   * 달라지면 계정도 다른 것이 보통이다.
+   */
+  el.server.addEventListener('click', () => {
+    el.main.hidden = true;
+    el.setup.hidden = false;
+    el.setupMsg.textContent = '';
+    el.key.value = '';
+    el.url.focus();
+    el.url.select();
+  });
+
   el.send.addEventListener('click', () => void send());
   // 입력창 내용을 프롬프트 대신 할 일로 넣는다. 여러 줄이면 줄마다 항목이 된다.
   el.addTodo.addEventListener('click', () => {

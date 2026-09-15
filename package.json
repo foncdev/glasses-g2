@@ -1,13 +1,14 @@
 {
   "name": "glasses-g2",
   "private": true,
-  "version": "0.2.0",
+  "version": "0.2.1",
   "type": "module",
   "description": "Even Realities G2 호스트 앱. glasses-ui를 Even Hub 앱으로 포장한다.",
   "scripts": {
     "dev": "vite",
     "build": "tsc && vite build",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "pack": "node scripts/pack.mjs"
   },
   "devDependencies": {
     "@evenrealities/evenhub-cli": "^0.1.14",
