@@ -102,8 +102,11 @@ const RELAY_ADDRESS = 'http://127.0.0.1:8787';
 function applyQueryOverrides(): boolean {
   const q = new URLSearchParams(location.search);
   const host = q.get('host');
+  const user = q.get('user');
   const key = q.get('key');
   if (host) el.url.value = host;
+  // 계정 로그인이 생긴 뒤로는 아이디도 있어야 자동으로 붙는다.
+  if (user) el.username.value = user;
   if (key) el.key.value = key;
   return q.get('auto') === '1' && Boolean(host);
 }
