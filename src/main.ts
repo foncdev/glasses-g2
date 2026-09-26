@@ -90,7 +90,37 @@ function renderMirror(sessions: SessionInfo[], cursor: number): void {
 // --- 접속 ---
 
 const STORE_URL = 'agentcli.url';
-const STORE_TOKEN = 'agentcli.token';
+/**
+ * 로그인 토큰을 두는 곳. 관리 화면(`/web`)과 같은 이름을 쓴다.
+ *
+ * 둘은 같은 주소(ip:4100)에서 열리므로 브라우저 저장소를 함께 쓴다. 한쪽에서
+ * 로그인하면 다른 쪽도 로그인된 채로 열린다. 예전에는 이름이 하이픈 하나
+ * 달라서(agentcli.token / agent-cli.token) 따로 로그인해야 했다.
+ */
+const STORE_TOKEN = 'relay.token';
+/** 예전 이름. 읽기만 하고, 새로 저장할 때 비운다. */
+const OLD_TOKEN_KEYS = ['agentcli.token', 'agent-cli.token'];
+
+async function loadToken(): Promise<string> {
+  for (const key of [STORE_TOKEN, ...OLD_TOKEN_KEYS]) {
+    const v = await adapter.loadSetting(key);
+    if (v) return v;
+  }
+  return '';
+}
+
+async function saveToken(token: string): Promise<void> {
+  await adapter.saveSetting(STORE_TOKEN, token);
+  for (const key of OLD_TOKEN_KEYS) await adapter.saveSetting(key, '');
+  // 관리 화면은 브라우저 저장소만 본다. 비운 값은 지워 둔다.
+  if (!token) {
+    try {
+      for (const key of [STORE_TOKEN, ...OLD_TOKEN_KEYS]) localStorage.removeItem(key);
+    } catch {
+      // 저장소가 막혀 있으면 넘어간다.
+    }
+  }
+}
 
 /**
  * 같은 폰에서 도는 Relay 앱의 중계 주소.
@@ -181,12 +211,23 @@ async function connect(): Promise<void> {
 
   try {
     // 저장된 토큰이 있으면 그걸로 먼저 붙어본다.
-    const saved = await adapter.loadSetting(STORE_TOKEN);
+    // 관리 화면(/web)에서 로그인했으면 그 토큰도 여기서 보인다.
+    const saved = await loadToken();
     if (saved && !el.key.value) {
       agentCli.configure({ baseUrl, apiKey: saved });
-      await agentCli.health();
-      await afterAuth(baseUrl, saved);
-      return;
+      try {
+        // relay가 직접 답하는 경로로 토큰을 확인한다. /health는 agent로
+        // 넘어가서, agent가 꺼져 있으면 토큰이 멀쩡해도 503으로 실패했다.
+        await agentCli.motd();
+        await afterAuth(baseUrl, saved);
+        return;
+      } catch (err) {
+        // 만료됐거나 다른 곳에서 로그아웃했다. 남은 토큰을 지우고 로그인 칸을
+        // 띄운다. 예전에는 지우지 않아 다음에도 같은 토큰으로 실패했다.
+        if (!(err instanceof AgentCliError && err.status === 401)) throw err;
+        await saveToken('');
+        agentCli.configure({ baseUrl, apiKey: '' });
+      }
     }
 
     // 토큰이 없으면 아이디/비밀번호로 로그인한다.
@@ -245,7 +286,7 @@ async function afterAuth(baseUrl: string, token: string): Promise<void> {
   el.server.title = `중계 서버: ${baseUrl}\n눌러서 바꾸기`;
 
   void adapter.saveSetting(STORE_URL, baseUrl);
-  void adapter.saveSetting(STORE_TOKEN, token);
+  void saveToken(token);
 
   // 접속하면 서버 상태부터 알려준다. 로그인 직후 빈 화면은 불친절하다.
   // 폰 로그와 안경 화면 양쪽에 띄운다. 안경만 보는 경우가 많다.
