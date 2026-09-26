@@ -444,11 +444,26 @@ async function boot(): Promise<void> {
     }
   }
 
+  // 쓰는 중에 토큰이 폐기되거나 만료됐다. 로그인 칸을 다시 띄운다.
+  // 저장된 토큰은 여기서 지우지 않는다 — 부팅 중 로그인 전 요청의 401에도
+  // 불리므로, 지우면 멀쩡한 토큰을 읽기도 전에 잃는다. 죽은 토큰은
+  // connect가 확인하고 지운다.
+  agentCli.onUnauthorized(() => {
+    if (el.main.hidden) return;
+    el.main.hidden = true;
+    el.setup.hidden = false;
+    el.key.value = '';
+    showLoginFields(true);
+    el.setupMsg.textContent = '로그인이 풀렸습니다. 다시 로그인하세요.';
+  });
+
   if (autoConnect || el.url.value) void connect();
 
   // 목록 상태를 주기적으로 맞춘다.
   setInterval(() => {
-    if (agentCli.isConfigured && !relay.isDetail) void relay.refresh().catch(() => undefined);
+    // 401을 받은 뒤로는 멈춘다. 로그인 화면에 머무는 동안 relay 로그에
+    // '인증 실패'가 5초마다 쌓였다.
+    if (agentCli.isConfigured && agentCli.canPoll && !relay.isDetail) void relay.refresh().catch(() => undefined);
   }, 5000);
 }
 
