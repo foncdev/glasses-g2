@@ -3,7 +3,8 @@
     // relay는 심볼릭 링크라 peer 의존성을 스스로 못 찾는다. 호스트 것을 쓰게 한다.
     "baseUrl": ".",
     "paths": {
-      "@evenrealities/even_hub_sdk": ["./node_modules/@evenrealities/even_hub_sdk"]
+      "@evenrealities/even_hub_sdk": ["./node_modules/@evenrealities/even_hub_sdk"],
+      "@evenrealities/pretext": ["./node_modules/@evenrealities/pretext"]
     },
     "target": "es2023",
     "module": "esnext",

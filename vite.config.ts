@@ -9,6 +9,10 @@ import { defineConfig } from 'vite';
 const sdk = fileURLToPath(
   new URL('./node_modules/@evenrealities/even_hub_sdk', import.meta.url),
 );
+// glasses-ui가 글자 폭을 재는 데 쓴다. SDK와 같은 이유로 이 앱 것을 쓴다.
+const pretext = fileURLToPath(
+  new URL('./node_modules/@evenrealities/pretext', import.meta.url),
+);
 
 export default defineConfig({
   /**
@@ -19,7 +23,7 @@ export default defineConfig({
    */
   base: './',
   resolve: {
-    alias: { '@evenrealities/even_hub_sdk': sdk },
+    alias: { '@evenrealities/even_hub_sdk': sdk, '@evenrealities/pretext': pretext },
     // 링크된 패키지도 소스로 함께 빌드한다.
     preserveSymlinks: false,
   },

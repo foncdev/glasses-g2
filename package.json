@@ -18,6 +18,7 @@
   },
   "dependencies": {
     "@evenrealities/even_hub_sdk": "^0.0.15",
+    "@evenrealities/pretext": "^0.1.4",
     "@foncdev/glasses-ui": "file:../glasses-ui"
   },
   "license": "MIT"
