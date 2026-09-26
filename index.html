@@ -15,6 +15,11 @@
         매니저 주소
         <input id="url" type="url" inputmode="url" placeholder="192.168.0.10:4000" autocomplete="off" />
       </label>
+      <!-- 초기 설정 때만 보인다. relay-service 시작 로그에 찍힌 코드. -->
+      <label id="code-field" hidden>
+        설정 코드
+        <input id="code" type="text" autocomplete="one-time-code" autocapitalize="characters" placeholder="XXXX-XXXX-XXXX" />
+      </label>
       <label id="user-field">
         아이디
         <input id="username" type="text" autocomplete="username" autocapitalize="off" />

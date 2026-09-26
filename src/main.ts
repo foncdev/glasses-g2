@@ -24,6 +24,8 @@ const el = {
   url: document.getElementById('url') as HTMLInputElement,
   key: document.getElementById('key') as HTMLInputElement,
   username: document.getElementById('username') as HTMLInputElement,
+  code: document.getElementById('code') as HTMLInputElement,
+  codeField: document.getElementById('code-field') as HTMLElement,
   userField: document.getElementById('user-field') as HTMLElement,
   keyLabel: document.getElementById('key-label') as HTMLElement,
   connect: document.getElementById('connect') as HTMLButtonElement,
@@ -190,17 +192,18 @@ async function connect(): Promise<void> {
 
     const username = el.username.value.trim();
     const password = el.key.value;
-    if (!username || !password) {
+    const code = el.code.value.trim();
+    if (!username || !password || (!status.configured && !code)) {
       showLoginFields(status.configured);
       el.setupMsg.textContent = status.configured
         ? '아이디와 비밀번호를 입력하세요.'
-        : '관리자 계정을 만드세요. 비밀번호는 10자 이상입니다.';
+        : '관리자 계정을 만드세요. 설정 코드는 서버 시작 로그에 있고, 비밀번호는 10자 이상입니다.';
       return;
     }
 
     const token = status.configured
       ? await agentCli.login(username, password)
-      : await agentCli.setup(username, password);
+      : await agentCli.setup(username, password, code);
 
     agentCli.configure({ baseUrl, apiKey: token });
     await afterAuth(baseUrl, token);
@@ -266,6 +269,8 @@ async function afterAuth(baseUrl: string, token: string): Promise<void> {
 /** 로그인 입력 칸을 드러낸다. 설정 전이면 문구를 바꾼다. */
 function showLoginFields(configured: boolean): void {
   el.userField.hidden = false;
+  // 설정 코드는 계정을 만들 때만 받는다. relay-service가 시작 로그에 찍는다.
+  el.codeField.hidden = configured;
   const hint = document.querySelector('#setup .hint');
   if (hint) {
     hint.textContent = configured
@@ -274,7 +279,8 @@ function showLoginFields(configured: boolean): void {
   }
   el.keyLabel.textContent = configured ? '비밀번호' : '비밀번호 (10자 이상)';
   el.connect.textContent = configured ? '로그인' : '계정 만들기';
-  if (!el.username.value) el.username.focus();
+  if (!configured && !el.code.value) el.code.focus();
+  else if (!el.username.value) el.username.focus();
   else el.key.focus();
 }
 
