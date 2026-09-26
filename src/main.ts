@@ -102,11 +102,10 @@ const STORE_TOKEN = 'relay.token';
 const OLD_TOKEN_KEYS = ['agentcli.token', 'agent-cli.token'];
 
 async function loadToken(): Promise<string> {
-  for (const key of [STORE_TOKEN, ...OLD_TOKEN_KEYS]) {
-    const v = await adapter.loadSetting(key);
-    if (v) return v;
-  }
-  return '';
+  // 한꺼번에 읽는다. 하나씩 읽으면 브리지가 늦을 때 그 몫이 쌓여 연결
+  // 버튼이 그만큼 오래 꺼져 있었다.
+  const values = await Promise.all([STORE_TOKEN, ...OLD_TOKEN_KEYS].map((k) => adapter.loadSetting(k)));
+  return values.find(Boolean) ?? '';
 }
 
 async function saveToken(token: string): Promise<void> {
@@ -199,12 +198,17 @@ async function findLocalRelay(): Promise<boolean> {
   }
 }
 
+/** 접속을 시도하는 중인지. 부팅 때 자동 접속과 버튼이 겹치지 않게 한다. */
+let connecting = false;
+
 async function connect(): Promise<void> {
   const baseUrl = el.url.value.trim();
   if (!baseUrl) {
     el.setupMsg.textContent = '주소를 입력하세요.';
     return;
   }
+  if (connecting) return;
+  connecting = true;
 
   el.connect.disabled = true;
   el.setupMsg.textContent = '접속 중…';
@@ -257,23 +261,19 @@ async function connect(): Promise<void> {
     // 인증 문제면 입력 칸을 보여준다.
     if (/비밀번호|아이디|인증|로그인/.test(message)) showLoginFields(true);
   } finally {
+    connecting = false;
     el.connect.disabled = false;
   }
 }
 
-/** 인증이 끝난 뒤 공통 처리. */
+/**
+ * 인증이 끝난 뒤 공통 처리.
+ *
+ * 화면 전환과 토큰 저장만 기다리고, 안경 연결·첫 화면 그리기는 뒤에서
+ * 돌린다. 예전에는 블루투스로 안경을 붙이고 그리는 것까지 다 기다려서,
+ * 그동안 연결 버튼이 꺼진 채였다.
+ */
 async function afterAuth(baseUrl: string, token: string): Promise<void> {
-  // 안경 연결이 아직이면 지금 다시 시도한다.
-  if (!glassesReady) {
-    try {
-      await relay.start();
-      glassesReady = true;
-      phoneLog('G2 연결됨', 'ok');
-    } catch (err) {
-      phoneLog(`G2 미연결: ${(err as Error).message}`, 'warn');
-    }
-  }
-
   // 화면 전환과 토큰 저장을 먼저 끝낸다.
   // 세션 목록은 agent-cli가 붙어 있어야 읽히는데, 로그인은 그것과 무관하다.
   el.setup.hidden = true;
@@ -287,6 +287,22 @@ async function afterAuth(baseUrl: string, token: string): Promise<void> {
 
   void adapter.saveSetting(STORE_URL, baseUrl);
   void saveToken(token);
+
+  void afterAuthGlasses();
+}
+
+/** 로그인 뒤 안경 쪽 일. 늦어도 폰 화면을 막지 않게 따로 돈다. */
+async function afterAuthGlasses(): Promise<void> {
+  // 안경 연결이 아직이면 지금 다시 시도한다.
+  if (!glassesReady) {
+    try {
+      await relay.start();
+      glassesReady = true;
+      phoneLog('G2 연결됨', 'ok');
+    } catch (err) {
+      phoneLog(`G2 미연결: ${(err as Error).message}`, 'warn');
+    }
+  }
 
   // 접속하면 서버 상태부터 알려준다. 로그인 직후 빈 화면은 불친절하다.
   // 폰 로그와 안경 화면 양쪽에 띄운다. 안경만 보는 경우가 많다.
