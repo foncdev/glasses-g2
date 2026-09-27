@@ -198,6 +198,9 @@ async function findLocalRelay(): Promise<boolean> {
   }
 }
 
+/** 마지막으로 붙은 곳이 폰(접속 키)인지. 로그인 칸을 다시 띄울 때 쓴다. */
+let keyOnlyMode = false;
+
 /** 접속을 시도하는 중인지. 부팅 때 자동 접속과 버튼이 겹치지 않게 한다. */
 let connecting = false;
 
@@ -238,14 +241,19 @@ async function connect(): Promise<void> {
     agentCli.configure({ baseUrl, apiKey: '' });
     const status = await agentCli.authStatus();
 
-    const username = el.username.value.trim();
+    // 폰의 Relay 앱에 붙었으면 앱이 정한 접속 키 하나로 들어간다.
+    const keyOnly = status.mode === 'key';
+    keyOnlyMode = keyOnly;
+    const username = keyOnly ? 'relay' : el.username.value.trim();
     const password = el.key.value;
     const code = el.code.value.trim();
     if (!username || !password || (!status.configured && !code)) {
-      showLoginFields(status.configured);
-      el.setupMsg.textContent = status.configured
-        ? '아이디와 비밀번호를 입력하세요.'
-        : '관리자 계정을 만드세요. 설정 코드는 서버 시작 로그에 있고, 비밀번호는 10자 이상입니다.';
+      showLoginFields(status.configured, keyOnly);
+      el.setupMsg.textContent = keyOnly
+        ? 'Relay 앱 설정의 접속 키를 입력하세요.'
+        : status.configured
+          ? '아이디와 비밀번호를 입력하세요.'
+          : '관리자 계정을 만드세요. 설정 코드는 서버 시작 로그에 있고, 비밀번호는 10자 이상입니다.';
       return;
     }
 
@@ -259,7 +267,7 @@ async function connect(): Promise<void> {
     const message = err instanceof AgentCliError ? err.message : (err as Error).message;
     el.setupMsg.textContent = message;
     // 인증 문제면 입력 칸을 보여준다.
-    if (/비밀번호|아이디|인증|로그인/.test(message)) showLoginFields(true);
+    if (/비밀번호|아이디|인증|로그인|접속 키/.test(message)) showLoginFields(true, keyOnlyMode);
   } finally {
     connecting = false;
     el.connect.disabled = false;
@@ -327,20 +335,25 @@ async function afterAuthGlasses(): Promise<void> {
 }
 
 /** 로그인 입력 칸을 드러낸다. 설정 전이면 문구를 바꾼다. */
-function showLoginFields(configured: boolean): void {
-  el.userField.hidden = false;
+function showLoginFields(configured: boolean, keyOnly = false): void {
+  // 폰에 붙으면 아이디가 없다. 접속 키만 받는다.
+  el.userField.hidden = keyOnly;
   // 설정 코드는 계정을 만들 때만 받는다. relay-service가 시작 로그에 찍는다.
   el.codeField.hidden = configured;
   const hint = document.querySelector('#setup .hint');
   if (hint) {
-    hint.textContent = configured
-      ? 'Relay 서버에 로그인합니다.'
-      : '관리자 계정을 만듭니다. 이 계정으로 에이전트를 제어합니다.';
+    hint.textContent = keyOnly
+      ? '폰의 Relay 앱에 붙습니다. 앱 설정 > 안경 접속의 키를 넣으세요.'
+      : configured
+        ? 'Relay 서버에 로그인합니다.'
+        : '관리자 계정을 만듭니다. 이 계정으로 에이전트를 제어합니다.';
   }
-  el.keyLabel.textContent = configured ? '비밀번호' : '비밀번호 (10자 이상)';
+  el.keyLabel.textContent = keyOnly ? '접속 키' : configured ? '비밀번호' : '비밀번호 (10자 이상)';
+  el.key.type = keyOnly ? 'text' : 'password';
+  el.key.autocapitalize = keyOnly ? 'characters' : 'off';
   el.connect.textContent = configured ? '로그인' : '계정 만들기';
   if (!configured && !el.code.value) el.code.focus();
-  else if (!el.username.value) el.username.focus();
+  else if (!keyOnly && !el.username.value) el.username.focus();
   else el.key.focus();
 }
 
@@ -469,7 +482,7 @@ async function boot(): Promise<void> {
     el.main.hidden = true;
     el.setup.hidden = false;
     el.key.value = '';
-    showLoginFields(true);
+    showLoginFields(true, keyOnlyMode);
     el.setupMsg.textContent = '로그인이 풀렸습니다. 다시 로그인하세요.';
   });
 
