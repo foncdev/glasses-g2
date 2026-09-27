@@ -10,10 +10,10 @@
     <section id="setup">
       <pre id="banner" class="banner" aria-label="FONCDEV"></pre>
       <h1><span class="sigil">$</span> relay<span class="caret">_</span></h1>
-      <p class="hint">원격지 PC의 매니저 주소를 입력하세요. 같은 와이파이여야 합니다.</p>
+      <p class="hint">폰의 Relay 앱(127.0.0.1:4100)에 접속 키로 붙습니다. relay-service에 바로 붙으려면 그 주소를 넣으세요.</p>
       <label>
-        매니저 주소
-        <input id="url" type="url" inputmode="url" placeholder="192.168.0.10:4000" autocomplete="off" />
+        주소
+        <input id="url" type="url" inputmode="url" placeholder="http://127.0.0.1:4100" autocomplete="off" />
       </label>
       <!-- 초기 설정 때만 보인다. relay-service 시작 로그에 찍힌 코드. -->
       <label id="code-field" hidden>
@@ -29,7 +29,7 @@
         <input id="key" type="password" placeholder="" autocomplete="current-password" />
       </label>
       <button id="connect" class="primary">연결</button>
-      <button id="use-relay">Relay 중계로 연결 (127.0.0.1:8787)</button>
+      <button id="use-relay">폰 Relay 앱으로 연결 (127.0.0.1:4100)</button>
       <div id="setup-msg" class="msg"></div>
     </section>
 

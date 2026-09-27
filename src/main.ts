@@ -122,10 +122,10 @@ async function saveToken(token: string): Promise<void> {
 }
 
 /**
- * 같은 폰에서 도는 Relay 앱의 중계 주소.
- * 여기로 붙으면 맥 주소와 API 키는 Relay가 들고 있으므로 몰라도 된다.
+ * 같은 폰에서 도는 Relay 앱의 주소. G2 앱 허용 목록에 있는 포트(4100)다.
+ * 여기로 붙으면 앱이 정한 접속 키로 로그인한다. relay-service는 앱이 대신 이야기한다.
  */
-const RELAY_ADDRESS = 'http://127.0.0.1:8787';
+const RELAY_ADDRESS = 'http://127.0.0.1:4100';
 
 /** 개발 중 시뮬레이터에서 매번 입력하지 않도록 쿼리로 접속 정보를 받는다. */
 function applyQueryOverrides(): boolean {
@@ -166,9 +166,14 @@ async function findServingRelay(): Promise<{ found: boolean; needsKey: boolean }
     // 응답이 오면 relay-service가 맞다.
     // agent-cli 연결 여부는 별개다. 체크리스트 등은 서버가 직접 관리하므로
     // agent가 없어도 로그인하고 쓸 수 있어야 한다.
-    const status = (await res.json()) as { ok?: boolean; agents?: Array<{ name: string }> };
+    const status = (await res.json()) as { ok?: boolean; local?: boolean; agents?: Array<{ name: string }> };
     if (typeof status.ok !== 'boolean') return { found: false, needsKey: false };
 
+    // 폰의 Relay 앱이 답했다(서버 없이 쓰는 중이거나 서버에 닿지 않는다).
+    if (status.local) {
+      phoneLog('Relay 앱(폰)에 연결', 'ok');
+      return { found: true, needsKey: true };
+    }
     const agent = status.agents?.[0]?.name;
     phoneLog(
       agent ? `relay-service 연결 (agent: ${agent})` : 'relay-service 연결 (agent 대기 중)',
@@ -373,10 +378,14 @@ async function send(): Promise<void> {
 
 async function boot(): Promise<void> {
   el.connect.addEventListener('click', () => void connect());
-  // 자동 탐색이 실패해도 손으로 중계에 붙어볼 수 있게 한다.
+  // 자동 탐색이 실패해도 손으로 폰의 Relay 앱에 붙어볼 수 있게 한다.
+  // 접속 키 칸을 곧바로 띄운다. 키를 넣고 연결을 누르면 로그인한다.
   el.useRelay.addEventListener('click', () => {
     el.url.value = RELAY_ADDRESS;
     el.key.value = '';
+    keyOnlyMode = true;
+    showLoginFields(true, true);
+    el.setupMsg.textContent = 'Relay 앱 설정 > 안경 접속의 접속 키를 입력하세요.';
     void connect();
   });
 
