@@ -15,6 +15,7 @@ Even Realities G2 안경에서 도는 호스트 앱. Even 컴패니언 앱의 We
 |---|---|
 | `app.json` | Even Hub 매니페스트. 패키지 ID, 권한, network whitelist |
 | `src/main.ts` | 부팅, 서버 주소 탐색, 폰 화면 요소 연결 |
+| `src/strings.ts` | 폰 화면 글의 한국어·영어 판 |
 | `src/banner.ts` | 로그인 화면 로고 |
 | `vite.config.ts` | 빌드 설정 |
 
@@ -52,6 +53,20 @@ npm run build        # dist/
 고치면 권한이 막혀 접속되지 않는다.
 
 안경에 설치할 `.ehpk`는 `@evenrealities/evenhub-cli`로 만든다.
+
+## 언어
+
+한국어와 영어를 지원한다. 언어는 폰 언어를 따른다 — Even 앱 웹뷰의
+`navigator.languages` 첫 항목이 `ko`로 시작하면 한국어, 그 밖에는 영어다.
+
+- 안경 화면 글은 `glasses-ui`의 `src/core/i18n.ts`에 있다.
+- 폰 화면(로그인·설정) 글은 `src/strings.ts`에 있다. `index.html`의 고정 글은
+  `data-i18n`·`data-i18n-placeholder`·`data-i18n-title`에 키를 적어 두면 시작할 때 바꿔 넣는다.
+- 개발 서버(`npm run dev`)에서는 `?lang=en`·`?lang=ko`로 덮어쓸 수 있다.
+  시뮬레이터의 웹뷰 언어를 바꾸기 어려워 두 언어 화면을 이렇게 확인한다.
+
+언어를 더하려면 `glasses-ui` README의 순서대로 안경 쪽 판을 더한 뒤,
+`src/strings.ts`에도 같은 코드의 판을 넣는다.
 
 ## 접속 대상 찾기
 

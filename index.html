@@ -10,30 +10,30 @@
     <section id="setup">
       <pre id="banner" class="banner" aria-label="FONCDEV"></pre>
       <h1><span class="sigil">$</span> relay<span class="caret">_</span></h1>
-      <p class="hint">폰의 Relay 앱(127.0.0.1:4100)에 접속 키로 붙습니다. relay-service에 바로 붙으려면 그 주소를 넣으세요.</p>
-      <label>
+      <p class="hint" data-i18n="setupHint">폰의 Relay 앱(127.0.0.1:4100)에 접속 키로 붙습니다. relay-service에 바로 붙으려면 그 주소를 넣으세요.</p>
+      <label data-i18n="address">
         주소
         <input id="url" type="url" inputmode="url" placeholder="http://127.0.0.1:4100" autocomplete="off" />
       </label>
       <!-- 초기 설정 때만 보인다. relay-service 시작 로그에 찍힌 코드. -->
-      <label id="code-field" hidden>
+      <label id="code-field" data-i18n="setupCode" hidden>
         설정 코드
         <input id="code" type="text" autocomplete="one-time-code" autocapitalize="characters" placeholder="XXXX-XXXX-XXXX" />
       </label>
-      <label id="user-field">
+      <label id="user-field" data-i18n="username">
         아이디
         <input id="username" type="text" autocomplete="username" autocapitalize="off" />
       </label>
       <label>
-        <span id="key-label">비밀번호</span>
+        <span id="key-label" data-i18n="password">비밀번호</span>
         <input id="key" type="password" placeholder="" autocomplete="current-password" />
       </label>
       <!-- 폰 Relay 앱의 접속 키만 저장한다. 서버 계정 비밀번호는 저장하지 않는다(토큰으로 다시 붙는다). -->
-      <label id="remember-field" class="toggle" hidden>
+      <label id="remember-field" class="toggle" data-i18n="rememberKey" hidden>
         <input id="remember" type="checkbox" checked /> 접속 키 저장
       </label>
-      <button id="connect" class="primary">연결</button>
-      <button id="use-relay">폰 Relay 앱으로 연결 (127.0.0.1:4100)</button>
+      <button id="connect" class="primary" data-i18n="connect">연결</button>
+      <button id="use-relay" data-i18n="useRelay">폰 Relay 앱으로 연결 (127.0.0.1:4100)</button>
       <div id="setup-msg" class="msg"></div>
     </section>
 
@@ -43,21 +43,21 @@
         <button id="back" hidden>‹</button>
         <span id="title" class="path">~/sessions</span>
         <span class="spacer"></span>
-        <button id="server" class="ghost" title="붙어 있는 중계 서버. 눌러서 바꾼다"></button>
-        <label class="toggle" title="이어가기 후 원본 기록을 지웁니다 (되돌릴 수 없음)">
+        <button id="server" class="ghost" title="붙어 있는 중계 서버. 눌러서 바꾼다" data-i18n-title="serverTitle"></button>
+        <label class="toggle" title="이어가기 후 원본 기록을 지웁니다 (되돌릴 수 없음)" data-i18n="deleteOrig" data-i18n-title="deleteOrigTitle">
           <input id="delete-orig" type="checkbox" /> 원본삭제
         </label>
-        <label class="toggle"><input id="tts" type="checkbox" checked /> 음성</label>
+        <label class="toggle" data-i18n="voice"><input id="tts" type="checkbox" checked /> 음성</label>
       </header>
 
       <pre id="glasses" class="mirror"></pre>
       <div id="log" class="log"></div>
 
       <div class="composer">
-        <textarea id="prompt" rows="2" placeholder="프롬프트 입력" disabled></textarea>
-        <button id="add-todo" title="할 일로 추가">＋할일</button>
-        <button id="resume" hidden>▶ 이어가기</button>
-        <button id="send" class="primary" disabled>전송</button>
+        <textarea id="prompt" rows="2" placeholder="프롬프트 입력" data-i18n-placeholder="promptPlaceholder" disabled></textarea>
+        <button id="add-todo" title="할 일로 추가" data-i18n="addTodo" data-i18n-title="addTodoTitle">＋할일</button>
+        <button id="resume" data-i18n="resume" hidden>▶ 이어가기</button>
+        <button id="send" class="primary" data-i18n="send" disabled>전송</button>
       </div>
     </section>
 

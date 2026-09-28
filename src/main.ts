@@ -12,10 +12,23 @@ import {
   AgentCliError,
   G2Adapter,
   GlassesUI,
+  setLocale,
   type SessionInfo,
 } from '@foncdev/glasses-ui';
 import { BANNER } from './banner.js';
+import { applyStaticText, t } from './strings.js';
 import './style.css';
+
+/*
+ * 언어는 웹뷰 언어를 따른다(glasses-ui가 navigator.languages로 고른다).
+ * 개발 중에는 ?lang=en / ?lang=ko로 덮어쓸 수 있다. 시뮬레이터의 웹뷰 언어는
+ * 바꾸기 어려워 두 언어 화면을 이렇게 확인한다. 가장 먼저 해야 안경·폰 글이 다 따른다.
+ */
+if (import.meta.env.DEV) {
+  const lang = new URLSearchParams(location.search).get('lang');
+  if (lang) setLocale(lang);
+}
+applyStaticText();
 
 const el = {
   setup: document.getElementById('setup') as HTMLElement,
@@ -91,11 +104,11 @@ const relay = new GlassesUI(adapter, {
  */
 function renderMirror(sessions: SessionInfo[], cursor: number): void {
   if (sessions.length === 0) {
-    el.glasses.textContent = '(연결된 세션이 없습니다)';
+    el.glasses.textContent = t().noSessions;
     return;
   }
   el.glasses.textContent = sessions
-    .map((s, i) => `${i === cursor ? '▸' : ' '} ${s.title || '새 대화'}`)
+    .map((s, i) => `${i === cursor ? '▸' : ' '} ${s.title || t().newChat}`)
     .join('\n');
 }
 
@@ -213,12 +226,12 @@ async function findServingRelay(): Promise<{ found: boolean; needsKey: boolean }
 
     // 폰의 Relay 앱이 답했다(서버 없이 쓰는 중이거나 서버에 닿지 않는다).
     if (status.local) {
-      phoneLog('Relay 앱(폰)에 연결', 'ok');
+      phoneLog(t().relayAppConnected, 'ok');
       return { found: true, needsKey: true };
     }
     const agent = status.agents?.[0]?.name;
     phoneLog(
-      agent ? `relay-service 연결 (agent: ${agent})` : 'relay-service 연결 (agent 대기 중)',
+      agent ? t().relayServiceConnected(agent) : t().relayServiceNoAgent,
       agent ? 'ok' : 'warn',
     );
     return { found: true, needsKey: true };
@@ -254,14 +267,14 @@ let connecting = false;
 async function connect(): Promise<void> {
   const baseUrl = el.url.value.trim();
   if (!baseUrl) {
-    el.setupMsg.textContent = '주소를 입력하세요.';
+    el.setupMsg.textContent = t().enterAddress;
     return;
   }
   if (connecting) return;
   connecting = true;
 
   el.connect.disabled = true;
-  el.setupMsg.textContent = '접속 중…';
+  el.setupMsg.textContent = t().connecting;
 
   try {
     // 저장된 토큰이 있으면 그걸로 먼저 붙어본다.
@@ -300,10 +313,10 @@ async function connect(): Promise<void> {
     if (!username || !password || (!status.configured && !code)) {
       showLoginFields(status.configured, keyOnly);
       el.setupMsg.textContent = keyOnly
-        ? 'Relay 앱 설정의 접속 키를 입력하세요.'
+        ? t().enterAccessKey
         : status.configured
-          ? '아이디와 비밀번호를 입력하세요.'
-          : '관리자 계정을 만드세요. 설정 코드는 서버 시작 로그에 있고, 비밀번호는 10자 이상입니다.';
+          ? t().enterCredentials
+          : t().createAdmin;
       return;
     }
 
@@ -317,8 +330,12 @@ async function connect(): Promise<void> {
   } catch (err) {
     const message = err instanceof AgentCliError ? err.message : (err as Error).message;
     el.setupMsg.textContent = message;
-    // 인증 문제면 입력 칸을 보여준다.
-    if (/비밀번호|아이디|인증|로그인|접속 키/.test(message)) showLoginFields(true, keyOnlyMode);
+    // 인증 문제면 입력 칸을 보여준다. 상태 코드로 먼저 보고, 코드가 없는 서버 문구는
+    // 서버가 보낸 글(한국어·영어)로 가린다. 화면 글과는 견주지 않는다.
+    const authError =
+      (err instanceof AgentCliError && (err.status === 401 || err.status === 403)) ||
+      /비밀번호|아이디|인증|로그인|접속 키|password|username|credential|unauthori[sz]ed|sign[ -]?in|log[ -]?in|access key/i.test(message);
+    if (authError) showLoginFields(true, keyOnlyMode);
   } finally {
     connecting = false;
     el.connect.disabled = false;
@@ -342,7 +359,7 @@ async function afterAuth(baseUrl: string, token: string): Promise<void> {
   // 어디에 붙었는지 헤더에 남긴다. 눌러서 바꿀 수 있다.
   // 주소는 길어서 호스트만 보여준다.
   el.server.textContent = hostOf(baseUrl);
-  el.server.title = `중계 서버: ${baseUrl}\n눌러서 바꾸기`;
+  el.server.title = t().serverTooltip(baseUrl);
 
   void adapter.saveSetting(STORE_URL, baseUrl);
   void saveToken(token);
@@ -357,9 +374,9 @@ async function afterAuthGlasses(): Promise<void> {
     try {
       await relay.start();
       glassesReady = true;
-      phoneLog('G2 연결됨', 'ok');
+      phoneLog(t().glassesConnected, 'ok');
     } catch (err) {
-      phoneLog(`G2 미연결: ${(err as Error).message}`, 'warn');
+      phoneLog(t().glassesNotConnected((err as Error).message), 'warn');
     }
   }
 
@@ -381,7 +398,7 @@ async function afterAuthGlasses(): Promise<void> {
     await relay.refreshHome();
   } catch (err) {
     // agent-cli가 없어도 알림·체크리스트는 쓸 수 있다.
-    phoneLog(`세션 목록 없음: ${(err as Error).message}`, 'warn');
+    phoneLog(t().noSessionList((err as Error).message), 'warn');
   }
 }
 
@@ -394,16 +411,12 @@ function showLoginFields(configured: boolean, keyOnly = false): void {
   el.codeField.hidden = configured;
   const hint = document.querySelector('#setup .hint');
   if (hint) {
-    hint.textContent = keyOnly
-      ? '폰의 Relay 앱에 붙습니다. 앱 설정 > 안경 접속의 키를 넣으세요.'
-      : configured
-        ? 'Relay 서버에 로그인합니다.'
-        : '관리자 계정을 만듭니다. 이 계정으로 에이전트를 제어합니다.';
+    hint.textContent = keyOnly ? t().hintKeyOnly : configured ? t().hintLogin : t().hintSetup;
   }
-  el.keyLabel.textContent = keyOnly ? '접속 키' : configured ? '비밀번호' : '비밀번호 (10자 이상)';
+  el.keyLabel.textContent = keyOnly ? t().accessKey : configured ? t().password : t().passwordMin;
   el.key.type = keyOnly ? 'text' : 'password';
   el.key.autocapitalize = keyOnly ? 'characters' : 'off';
-  el.connect.textContent = configured ? '로그인' : '계정 만들기';
+  el.connect.textContent = configured ? t().login : t().createAccount;
   if (!configured && !el.code.value) el.code.focus();
   else if (!keyOnly && !el.username.value) el.username.focus();
   else el.key.focus();
@@ -417,7 +430,7 @@ async function send(): Promise<void> {
     await relay.send(prompt);
     el.prompt.value = '';
   } catch (err) {
-    phoneLog(`전송 실패: ${(err as Error).message}`, 'error');
+    phoneLog(t().sendFailed((err as Error).message), 'error');
   } finally {
     el.send.disabled = false;
   }
@@ -433,9 +446,7 @@ async function boot(): Promise<void> {
     await fillSavedLogin();
     keyOnlyMode = true;
     showLoginFields(true, true);
-    el.setupMsg.textContent = el.key.value
-      ? '저장한 접속 키로 연결합니다.'
-      : 'Relay 앱 설정 > 안경 접속의 접속 키를 입력하세요.';
+    el.setupMsg.textContent = el.key.value ? t().savedKeyConnecting : t().enterAccessKeyFromSettings;
     void connect();
   });
 
@@ -468,9 +479,9 @@ async function boot(): Promise<void> {
       .addChecklist(text)
       .then(() => {
         el.prompt.value = '';
-        phoneLog(`할 일 추가: ${text.split('\n').length}건`, 'ok');
+        phoneLog(t().todoAdded(text.split('\n').length), 'ok');
       })
-      .catch((err: Error) => phoneLog(`할 일 추가 실패: ${err.message}`, 'error'));
+      .catch((err: Error) => phoneLog(t().todoAddFailed(err.message), 'error'));
   });
   el.back.addEventListener('click', () => void relay.backToList());
   el.resume.addEventListener('click', () => {
@@ -493,14 +504,14 @@ async function boot(): Promise<void> {
   try {
     await relay.start();
     glassesReady = true;
-    phoneLog('G2 연결됨', 'ok');
+    phoneLog(t().glassesConnected, 'ok');
 
     // 저장된 주소는 자동 감지가 실패했을 때만 쓴다. 여기서 채우면
     // 이 앱을 서빙한 서버보다 옛 주소가 우선해버린다.
     // 토큰은 connect가 직접 읽으므로 비밀번호 칸에 넣지 않는다.
     el.tts.checked = adapter.isVoiceEnabled;
   } catch (err) {
-    phoneLog(`G2 미연결: ${(err as Error).message}`, 'warn');
+    phoneLog(t().glassesNotConnected((err as Error).message), 'warn');
   }
 
   if (!autoConnect) {
@@ -532,7 +543,7 @@ async function boot(): Promise<void> {
     if (!el.url.value && (await findLocalRelay())) {
       el.url.value = RELAY_ADDRESS;
       el.key.value = '';
-      phoneLog('Relay 앱 중계를 통해 연결합니다.', 'ok');
+      phoneLog(t().viaRelayApp, 'ok');
     }
   }
 
@@ -546,7 +557,7 @@ async function boot(): Promise<void> {
     el.setup.hidden = false;
     el.key.value = '';
     showLoginFields(true, keyOnlyMode);
-    el.setupMsg.textContent = '로그인이 풀렸습니다. 다시 로그인하세요.';
+    el.setupMsg.textContent = t().loggedOut;
     // 저장한 키가 있으면 채워 둔다. 키를 바꾸지 않았다면 연결만 누르면 된다.
     void fillSavedLogin();
   });
