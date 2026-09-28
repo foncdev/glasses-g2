@@ -42,6 +42,8 @@ const el = {
   useRelay: document.getElementById('use-relay') as HTMLButtonElement,
   addTodo: document.getElementById('add-todo') as HTMLButtonElement,
   server: document.getElementById('server') as HTMLButtonElement,
+  remember: document.getElementById('remember') as HTMLInputElement,
+  rememberField: document.getElementById('remember-field') as HTMLElement,
 };
 
 /** 주소에서 호스트만 뽑는다. 헤더가 좁아 전체를 넣으면 밀린다. */
@@ -116,6 +118,36 @@ async function loadToken(): Promise<string> {
   // 버튼이 그만큼 오래 꺼져 있었다.
   const values = await Promise.all([STORE_TOKEN, ...OLD_TOKEN_KEYS].map((k) => adapter.loadSetting(k)));
   return values.find(Boolean) ?? '';
+}
+
+/*
+ * 마지막으로 로그인한 정보.
+ *
+ * 로그인 칸이 다시 뜰 때(로그인이 풀림, 서버 바꾸기, 앱을 다시 설치) 매번 키를
+ * 다시 치지 않게 채워 둔다. 폰 Relay 앱의 접속 키는 그 주소와 함께 저장해,
+ * 같은 주소일 때만 채운다 — 다른 서버의 비밀번호 칸에 들어가면 안 된다.
+ * relay-service 계정의 비밀번호는 저장하지 않는다. 그쪽은 토큰으로 다시 붙는다.
+ */
+const STORE_USER = 'relay.username';
+const STORE_KEY = 'relay.accessKey';
+
+async function rememberLogin(baseUrl: string, keyOnly: boolean, username: string, key: string): Promise<void> {
+  if (!keyOnly && username) await adapter.saveSetting(STORE_USER, username);
+  if (!keyOnly) return;
+  // 저장을 끄면 저장해 둔 키도 지운다.
+  await adapter.saveSetting(STORE_KEY, el.remember.checked && key ? JSON.stringify({ url: baseUrl, key }) : '');
+}
+
+/** 저장해 둔 로그인 정보로 칸을 채운다. 이미 적힌 것은 건드리지 않는다. */
+async function fillSavedLogin(): Promise<void> {
+  if (!el.username.value) el.username.value = await adapter.loadSetting(STORE_USER);
+  if (el.key.value) return;
+  try {
+    const saved = JSON.parse((await adapter.loadSetting(STORE_KEY)) || '{}') as { url?: string; key?: string };
+    if (saved.key && saved.url === el.url.value.trim()) el.key.value = saved.key;
+  } catch {
+    // 저장이 깨졌으면 비워 둔다.
+  }
 }
 
 async function saveToken(token: string): Promise<void> {
@@ -259,6 +291,9 @@ async function connect(): Promise<void> {
     // 폰의 Relay 앱에 붙었으면 앱이 정한 접속 키 하나로 들어간다.
     const keyOnly = status.mode === 'key';
     keyOnlyMode = keyOnly;
+    // 칸이 비어 있으면 마지막으로 로그인한 정보로 채운다. 폰 Relay 앱이면 저장한
+    // 접속 키로 곧바로 다시 들어간다.
+    await fillSavedLogin();
     const username = keyOnly ? 'relay' : el.username.value.trim();
     const password = el.key.value;
     const code = el.code.value.trim();
@@ -275,6 +310,7 @@ async function connect(): Promise<void> {
     const token = status.configured
       ? await agentCli.login(username, password)
       : await agentCli.setup(username, password, code);
+    await rememberLogin(baseUrl, keyOnly, username, password);
 
     agentCli.configure({ baseUrl, apiKey: token });
     await afterAuth(baseUrl, token);
@@ -353,6 +389,7 @@ async function afterAuthGlasses(): Promise<void> {
 function showLoginFields(configured: boolean, keyOnly = false): void {
   // 폰에 붙으면 아이디가 없다. 접속 키만 받는다.
   el.userField.hidden = keyOnly;
+  el.rememberField.hidden = !keyOnly;
   // 설정 코드는 계정을 만들 때만 받는다. relay-service가 시작 로그에 찍는다.
   el.codeField.hidden = configured;
   const hint = document.querySelector('#setup .hint');
@@ -390,12 +427,15 @@ async function boot(): Promise<void> {
   el.connect.addEventListener('click', () => void connect());
   // 자동 탐색이 실패해도 손으로 폰의 Relay 앱에 붙어볼 수 있게 한다.
   // 접속 키 칸을 곧바로 띄운다. 키를 넣고 연결을 누르면 로그인한다.
-  el.useRelay.addEventListener('click', () => {
+  el.useRelay.addEventListener('click', async () => {
     el.url.value = RELAY_ADDRESS;
     el.key.value = '';
+    await fillSavedLogin();
     keyOnlyMode = true;
     showLoginFields(true, true);
-    el.setupMsg.textContent = 'Relay 앱 설정 > 안경 접속의 접속 키를 입력하세요.';
+    el.setupMsg.textContent = el.key.value
+      ? '저장한 접속 키로 연결합니다.'
+      : 'Relay 앱 설정 > 안경 접속의 접속 키를 입력하세요.';
     void connect();
   });
 
@@ -404,13 +444,17 @@ async function boot(): Promise<void> {
    *
    * 접속 화면으로 되돌아가되 지금 주소를 채워 둔다. 대개 IP 한두 자리만
    * 바꾸므로 처음부터 치게 하지 않는다. 비밀번호는 비운다 — 서버가
-   * 달라지면 계정도 다른 것이 보통이다.
+   * 달라지면 계정도 다른 것이 보통이다. 폰 Relay 앱의 접속 키는 저장해 둔
+   * 주소와 같을 때만 다시 채운다.
    */
-  el.server.addEventListener('click', () => {
+  el.server.addEventListener('click', async () => {
     el.main.hidden = true;
     el.setup.hidden = false;
     el.setupMsg.textContent = '';
     el.key.value = '';
+    await fillSavedLogin();
+    // 지금 붙은 방식(접속 키·계정)에 맞게 칸을 보인다. 키 저장 체크도 여기서 끌 수 있다.
+    showLoginFields(true, keyOnlyMode);
     el.url.focus();
     el.url.select();
   });
@@ -503,6 +547,8 @@ async function boot(): Promise<void> {
     el.key.value = '';
     showLoginFields(true, keyOnlyMode);
     el.setupMsg.textContent = '로그인이 풀렸습니다. 다시 로그인하세요.';
+    // 저장한 키가 있으면 채워 둔다. 키를 바꾸지 않았다면 연결만 누르면 된다.
+    void fillSavedLogin();
   });
 
   if (autoConnect || el.url.value) void connect();

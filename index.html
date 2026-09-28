@@ -28,6 +28,10 @@
         <span id="key-label">비밀번호</span>
         <input id="key" type="password" placeholder="" autocomplete="current-password" />
       </label>
+      <!-- 폰 Relay 앱의 접속 키만 저장한다. 서버 계정 비밀번호는 저장하지 않는다(토큰으로 다시 붙는다). -->
+      <label id="remember-field" class="toggle" hidden>
+        <input id="remember" type="checkbox" checked /> 접속 키 저장
+      </label>
       <button id="connect" class="primary">연결</button>
       <button id="use-relay">폰 Relay 앱으로 연결 (127.0.0.1:4100)</button>
       <div id="setup-msg" class="msg"></div>
