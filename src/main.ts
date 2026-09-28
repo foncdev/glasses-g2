@@ -54,11 +54,21 @@ function hostOf(url: string): string {
   }
 }
 
+/**
+ * 폰 로그 줄 수 상한.
+ *
+ * 예전에는 줄을 지우지 않아, 같은 경고가 몇 초마다 찍히면 페이지가 끝없이
+ * 커졌다. 줄을 넣을 때마다 맨 아래로 스크롤하느라 배치도 다시 계산해
+ * 웹뷰가 CPU·메모리를 먹다 iOS에 죽는 원인이 될 수 있다.
+ */
+const LOG_MAX_LINES = 200;
+
 function phoneLog(text: string, level = 'info'): void {
   const div = document.createElement('div');
   div.className = `line ${level === 'info' ? '' : level}`;
   div.textContent = text;
   el.log.appendChild(div);
+  while (el.log.childElementCount > LOG_MAX_LINES) el.log.firstElementChild?.remove();
   el.log.scrollTop = el.log.scrollHeight;
 }
 
