@@ -73,13 +73,14 @@ npm run build        # dist/
 - BLE 호출이 겹치면 연결이 끊긴다. 직렬화가 필요하다
 - 폰트에 겹선(`═ ║`)이 없다. 로고는 둥근 모서리와 굵은 선만 쓴다
 
-제스처는 탭·더블탭·위·아래 넷뿐이고, **더블탭은 언제나 한 단계 위**로 간다. 맨 위인 메인 메뉴에서는 화면을 바로 끈다.
+제스처는 탭·더블탭·위·아래 넷뿐이고, **더블탭은 언제나 한 단계 위**로 간다. 맨 위인 메인 메뉴에서는 화면 꺼짐·종료하기·취소를 고른다.
 
 ## 관련
 
 - [glasses-ui](https://github.com/foncdev/glasses-ui) — 화면과 제스처 로직
 - [relay-service](https://github.com/foncdev/relay-service) — 중계 서버
 - [claudeAgent](https://github.com/foncdev/claudeAgent) — CLI 제어 매니저
+- [notify-agent](https://github.com/foncdev/notify-agent) — 맥 알림을 relay-service로 넘겨 안경 팝업으로 띄운다
 
 ## 라이선스
 
