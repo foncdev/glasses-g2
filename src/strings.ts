@@ -24,9 +24,7 @@ const ko = {
   deleteOrigTitle: '이어가기 후 원본 기록을 지웁니다 (되돌릴 수 없음)',
   deleteOrig: '원본삭제',
   voice: '음성',
-  promptPlaceholder: '프롬프트 입력',
-  addTodoTitle: '할 일로 추가',
-  addTodo: '＋할일',
+  promptPlaceholder: '프롬프트 입력 (키보드 마이크로 말해도 됩니다)',
   resume: '▶ 이어가기',
   send: '전송',
 
@@ -55,8 +53,6 @@ const ko = {
   sendFailed: (m: string) => `전송 실패: ${m}`,
   savedKeyConnecting: '저장한 접속 키로 연결합니다.',
   enterAccessKeyFromSettings: 'Relay 앱 설정 > 안경 접속의 접속 키를 입력하세요.',
-  todoAdded: (n: number) => `할 일 추가: ${n}건`,
-  todoAddFailed: (m: string) => `할 일 추가 실패: ${m}`,
   viaRelayApp: 'Relay 앱 중계를 통해 연결합니다.',
   loggedOut: '로그인이 풀렸습니다. 다시 로그인하세요.',
 };
@@ -80,9 +76,7 @@ const en: PhoneStrings = {
   deleteOrigTitle: 'Delete the original history after resuming (cannot be undone)',
   deleteOrig: 'Delete original',
   voice: 'Voice',
-  promptPlaceholder: 'Enter a prompt',
-  addTodoTitle: 'Add as a to-do',
-  addTodo: '＋To-Do',
+  promptPlaceholder: 'Enter a prompt (or speak with the keyboard mic)',
   resume: '▶ Resume',
   send: 'Send',
 
@@ -110,8 +104,6 @@ const en: PhoneStrings = {
   sendFailed: (m) => `Send failed: ${m}`,
   savedKeyConnecting: 'Connecting with the saved access key.',
   enterAccessKeyFromSettings: 'Enter the access key from Relay app Settings > Glasses access.',
-  todoAdded: (n) => (n === 1 ? 'Added 1 to-do' : `Added ${n} to-dos`),
-  todoAddFailed: (m) => `Couldn't add to-do: ${m}`,
   viaRelayApp: 'Connecting through the Relay app relay.',
   loggedOut: 'Signed out. Please sign in again.',
 };

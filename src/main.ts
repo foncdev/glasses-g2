@@ -53,7 +53,6 @@ const el = {
   resume: document.getElementById('resume') as HTMLButtonElement,
   deleteOrig: document.getElementById('delete-orig') as HTMLInputElement,
   useRelay: document.getElementById('use-relay') as HTMLButtonElement,
-  addTodo: document.getElementById('add-todo') as HTMLButtonElement,
   server: document.getElementById('server') as HTMLButtonElement,
   remember: document.getElementById('remember') as HTMLInputElement,
   rememberField: document.getElementById('remember-field') as HTMLElement,
@@ -355,6 +354,10 @@ async function afterAuth(baseUrl: string, token: string): Promise<void> {
   el.setup.hidden = true;
   el.main.hidden = false;
   el.setupMsg.textContent = '';
+  // 입력 칸은 처음에 막혀 있다(로그인 전에는 보낼 곳이 없다). 로그인하면 연다.
+  // 이걸 빠뜨려 폰에서는 프롬프트를 적을 수 없었다. 키보드 마이크로 말해 넣을 수도 있다.
+  el.prompt.disabled = false;
+  el.send.disabled = false;
 
   // 어디에 붙었는지 헤더에 남긴다. 눌러서 바꿀 수 있다.
   // 주소는 길어서 호스트만 보여준다.
@@ -471,18 +474,6 @@ async function boot(): Promise<void> {
   });
 
   el.send.addEventListener('click', () => void send());
-  // 입력창 내용을 프롬프트 대신 할 일로 넣는다. 여러 줄이면 줄마다 항목이 된다.
-  el.addTodo.addEventListener('click', () => {
-    const text = el.prompt.value.trim();
-    if (!text) return;
-    void relay
-      .addChecklist(text)
-      .then(() => {
-        el.prompt.value = '';
-        phoneLog(t().todoAdded(text.split('\n').length), 'ok');
-      })
-      .catch((err: Error) => phoneLog(t().todoAddFailed(err.message), 'error'));
-  });
   el.back.addEventListener('click', () => void relay.backToList());
   el.resume.addEventListener('click', () => {
     if (relay.currentSessionId) void relay.resume(relay.currentSessionId, el.deleteOrig.checked);
@@ -554,6 +545,8 @@ async function boot(): Promise<void> {
   agentCli.onUnauthorized(() => {
     if (el.main.hidden) return;
     el.main.hidden = true;
+    el.prompt.disabled = true;
+    el.send.disabled = true;
     el.setup.hidden = false;
     el.key.value = '';
     showLoginFields(true, keyOnlyMode);
