@@ -18,4 +18,4 @@ export const BANNER = String.raw`
 ╚═╝░░░░░░╚════╝░╚═╝░░╚══╝░╚════╝░╚═════╝░╚══════╝░░░╚═╝░░░
 `.trim();
 
-export const TAGLINE = 'Claude Code 원격 제어';
+export const TAGLINE = '원격 제어';
